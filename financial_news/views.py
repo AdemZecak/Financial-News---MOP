@@ -9,37 +9,56 @@ from .serializers import ArticleSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-# Create your views here.
+
+#scraping
 
 import os 
-from xml.etree import ElementTree
+import bs4
 from bs4 import BeautifulSoup
 import urllib.request
-import xml.etree.ElementTree as ET
-from xml.dom import minidom
+
+
+#paginacija
+
+from django.core.paginator import Paginator
+
+
+
+
 # dio za scraping 
-  
+
 req = urllib.request.urlopen('https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAPL&region=US&lang=en-US')
 xml = BeautifulSoup(req,'xml')
 
-article = xml.findAll('description')
-article = article[0:8]
 
+
+article = xml.findAll('item')[1:]
 news = []
 
-
 for i in article:
-    news.append(i.text)
+    
+    if "AAPL" or "TWTR" or "GC=F(GOLD)" or "INTC" in article:
+        news.append(i.text)
+    else:
+        print("no financial news")
 
 
 
 # dio za main page
 
 def index(request):
-    return render(request,'index.html',{'news':news})
+    
+    #paginacija
+    
+    p = Paginator(xml(),4)
+    page = request.GET.get('page')
+    venues = p.get_page(page)
 
 
-#izlistavanje članaka i postavljanje
+    return render(request,'index.html',{'news':news,'venues':venues})
+
+
+#izlistavanje članaka i postavljanje u rest frameworku
 
 @api_view(['GET','POST'])
 def article_list(request):
@@ -60,7 +79,8 @@ def article_list(request):
         return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)
 
 
-#detalji vezani za pojedini članak
+#informacije za pojedinačne članke
+
 @api_view(['GET','PUT','DELETE'])
 def article_detail(request,pk):
 
