@@ -30,31 +30,25 @@ from django.core.paginator import Paginator
 req = urllib.request.urlopen('https://feeds.finance.yahoo.com/rss/2.0/headline?s=AAPL&region=US&lang=en-US')
 xml = BeautifulSoup(req,'xml')
 
-
-
-article = xml.findAll('item')[1:]
-news = []
-
-for i in article:
-    
-    if "AAPL" or "TWTR" or "GC=F(GOLD)" or "INTC" in article:
-        news.append(i.text)
-    else:
-        print("no financial news")
-
-
-
 # dio za main page
 
 def index(request):
     
     #paginacija
-    
-    p = Paginator(xml(),4)
+
+    p = Paginator(xml.findAll('item'),4)
     page = request.GET.get('page')
     venues = p.get_page(page)
+    news = []
+    for i in venues:
+        
+        if "AAPL" or "TWTR" or "GC=F(GOLD)" or "INTC" in venues:
+            
+            news.append(i.text)
 
-
+        else:
+            print("no financial news")
+    
     return render(request,'index.html',{'news':news,'venues':venues})
 
 
